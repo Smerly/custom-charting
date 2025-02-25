@@ -1,4 +1,5 @@
 export type PiePoints = {
+    id: number;
     label: string
     value: number
 }
