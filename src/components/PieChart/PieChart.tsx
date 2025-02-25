@@ -8,8 +8,8 @@ import type { TimeData } from "./interfaces"
 import { useEffect, useState } from "react"
 import { Slider } from "../ui/slider"
 import { Button } from "../ui/button"
-import { useSpring, animated } from '@react-spring/web'
 import { generateData } from "@/utils"
+import { AnimatePresence, motion } from 'framer-motion'
 
 export function PieChart() {
   // state
@@ -39,25 +39,12 @@ export function PieChart() {
   const currentData = getCurrentData(timePosition)
   const total = currentData?.reduce((sum, entry) => sum + entry.value, 0) ?? 0
 
-  // Random Dummy Data
   const pieCategories = ["Category A", "Category B", "Category C", "Category D"]
-
   // Color scale domain range
-  const colors = [
-    "#FF6F61", // Coral 
-    "#6B5B95", // Lavender
-    "#88B04B", // Olive Green
-    "#F1C40F", // Golden Yellow 
-  ];
-  const getColor = scaleOrdinal({ 
-    domain: ["Category A", "Category B", "Category C", "Category D"],
+  const colors = ["#FF6F61", "#6B5B95", "#88B04B", "#F1C40F"];
+  const getColor = scaleOrdinal({
+    domain: pieCategories,
     range: colors,
-  })
-
-  // Animation
-  const pieProps = useSpring({
-    from: { scale: 0 },
-    to: { scale: pieScale === 0 ? 1 : 0 },
   })
 
   useEffect(() => {
@@ -75,20 +62,27 @@ export function PieChart() {
     <div className="flex flex-col items-center space-y-8">
 
       {/* Pie Chart */}
-      
+
       <div className="relative w-[400px] h-[400px]">
         <svg width={width} height={height}>
           <Group top={centerY} left={centerX}>
-            <animated.g style={{ ...pieProps }}>
-              <Pie
-                data={currentData}
-                pieValue={(d) => d.value}
-                outerRadius={radius - 40}
-                innerRadius={radius - 80}
-                cornerRadius={3}
-                padAngle={0.02}
+            <AnimatePresence>
+              <motion.g
+                initial={{ scale: 0 }}
+                animate={{ scale: pieScale }}
+                exit={{ scale: 0 }}
+                transition={{ duration: 0.5, ease: "easeInOut" }}
+                style={{ transformOrigin: "center" }}
               >
-                {(pie) => (
+                <Pie
+                  data={currentData}
+                  pieValue={(d) => d.value}
+                  outerRadius={radius - 40}
+                  innerRadius={radius - 80}
+                  cornerRadius={3}
+                  padAngle={0.02}
+                >
+                  {(pie) => (
                     <>
                       {pie.arcs.map((arc, i) => {
                         const key = arc.data.id ?? i;
@@ -105,9 +99,10 @@ export function PieChart() {
                         )
                       })}
                     </>
-                )}
-              </Pie>
-            </animated.g>
+                  )}
+                </Pie>
+              </motion.g>
+            </AnimatePresence>
           </Group>
         </svg>
       </div>
