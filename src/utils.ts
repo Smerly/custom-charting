@@ -1,3 +1,4 @@
+import { TimeData } from "./components/PieChart/interfaces";
 
 export const generateData = (categories: string[]) => {
     let openSpace = 100
@@ -9,4 +10,13 @@ export const generateData = (categories: string[]) => {
       console.log(`currentSpace: ${currentSpace}`)
       return {id: i, label: category, value: currentSpace}
     })
-  }
+}
+
+export const getCurrentData = (position: number, chartData: TimeData | null) => {
+    if (!chartData) return
+    const timePoints = Object.keys(chartData).map(Number)
+    const closestTime = timePoints.reduce((previous, current) => {
+      return Math.abs(current - position) < Math.abs(previous - position) ? current : previous
+    })
+    return chartData[closestTime]
+}

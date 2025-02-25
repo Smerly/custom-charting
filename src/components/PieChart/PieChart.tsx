@@ -8,7 +8,7 @@ import type { TimeData } from "./interfaces"
 import { useEffect, useState } from "react"
 import { Slider } from "../ui/slider"
 import { Button } from "../ui/button"
-import { generateData } from "@/utils"
+import { generateData, getCurrentData } from "@/utils"
 import { AnimatePresence, motion } from 'framer-motion'
 
 export function PieChart() {
@@ -17,18 +17,6 @@ export function PieChart() {
   const [chartData, setChartData] = useState<TimeData | null>(null)
   const [pieScale, setPieScale] = useState(1)
 
-
-  // helper functions
-
-  const getCurrentData = (position: number) => {
-    if (!chartData) return
-    const timePoints = Object.keys(chartData).map(Number)
-    const closestTime = timePoints.reduce((previous, current) => {
-      return Math.abs(current - position) < Math.abs(previous - position) ? current : previous
-    })
-    return chartData[closestTime]
-  }
-
   // util vars
   const width = 400
   const height = 400
@@ -36,17 +24,19 @@ export function PieChart() {
   const centerY = height / 2
   const centerX = width / 2
 
-  const currentData = getCurrentData(timePosition)
+  const currentData = getCurrentData(timePosition, chartData)
   const total = currentData?.reduce((sum, entry) => sum + entry.value, 0) ?? 0
 
+  // color domain to range
+
   const pieCategories = ["Category A", "Category B", "Category C", "Category D"]
-  // Color scale domain range
   const colors = ["#FF6F61", "#6B5B95", "#88B04B", "#F1C40F"];
   const getColor = scaleOrdinal({
     domain: pieCategories,
     range: colors,
   })
 
+  // random gen dummy data
   useEffect(() => {
     const timeData: TimeData = {
       0: generateData(pieCategories),
