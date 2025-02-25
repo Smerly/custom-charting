@@ -1,5 +1,6 @@
 {
     "build": {
+        "_comment": "! WARNING ! Normally shouldn't use legacy peer deps in live prod, but for demo purposes, it's here",
       "env": {
         "NPM_FLAGS": "--legacy-peer-deps"
       }
