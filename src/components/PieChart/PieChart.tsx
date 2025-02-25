@@ -5,71 +5,28 @@ import { Group } from "@visx/group"
 import { scaleOrdinal } from "@visx/scale"
 import { Text } from "@visx/text"
 import type { TimeData } from "./interfaces"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Slider } from "../ui/slider"
 import { Button } from "../ui/button"
 import { useSpring, animated } from '@react-spring/web'
-
-// Random Dummy Data
-const timeData: TimeData = {
-  0: [
-    { id: 1, label: "Category A", value: 40 },
-    { id: 2, label: "Category B", value: 30 },
-    { id: 3, label: "Category C", value: 20 },
-    { id: 4, label: "Category D", value: 10 },
-  ],
-  25: [
-    { id: 1, label: "Category A", value: 25 },
-    { id: 2, label: "Category B", value: 35 },
-    { id: 3, label: "Category C", value: 30 },
-    { id: 4, label: "Category D", value: 10 },
-  ],
-  50: [
-    { id: 1, label: "Category A", value: 15 },
-    { id: 2, label: "Category B", value: 45 },
-    { id: 3, label: "Category C", value: 25 },
-    { id: 4, label: "Category D", value: 15 },
-  ],
-  75: [
-    { id: 1, label: "Category A", value: 30 },
-    { id: 2, label: "Category B", value: 20 },
-    { id: 3, label: "Category C", value: 35 },
-    { id: 4, label: "Category D", value: 15 },
-  ],
-  100: [
-    { id: 1, label: "Category A", value: 35 },
-    { id: 2, label: "Category B", value: 25 },
-    { id: 3, label: "Category C", value: 20 },
-    { id: 4, label: "Category D", value: 20 },
-  ],
-}
-
-// Color scale domain range
-const colors = [
-  "#FF6F61", // Coral 
-  "#6B5B95", // Lavender
-  "#88B04B", // Olive Green
-  "#F1C40F", // Golden Yellow 
-];
-const getColor = scaleOrdinal({ 
-  domain: ["Category A", "Category B", "Category C", "Category D"],
-  range: colors,
-})
+import { generateData } from "@/utils"
 
 export function PieChart() {
   // state
   const [timePosition, setTimePosition] = useState(0)
+  const [chartData, setChartData] = useState<TimeData | null>(null)
   const [pieScale, setPieScale] = useState(1)
 
 
   // helper functions
 
   const getCurrentData = (position: number) => {
-    const timePoints = Object.keys(timeData).map(Number)
+    if (!chartData) return
+    const timePoints = Object.keys(chartData).map(Number)
     const closestTime = timePoints.reduce((previous, current) => {
       return Math.abs(current - position) < Math.abs(previous - position) ? current : previous
     })
-    return timeData[closestTime]
+    return chartData[closestTime]
   }
 
   // util vars
@@ -80,13 +37,39 @@ export function PieChart() {
   const centerX = width / 2
 
   const currentData = getCurrentData(timePosition)
-  const total = currentData.reduce((sum, entry) => sum + entry.value, 0)
+  const total = currentData?.reduce((sum, entry) => sum + entry.value, 0) ?? 0
+
+  // Random Dummy Data
+  const pieCategories = ["Category A", "Category B", "Category C", "Category D"]
+
+  // Color scale domain range
+  const colors = [
+    "#FF6F61", // Coral 
+    "#6B5B95", // Lavender
+    "#88B04B", // Olive Green
+    "#F1C40F", // Golden Yellow 
+  ];
+  const getColor = scaleOrdinal({ 
+    domain: ["Category A", "Category B", "Category C", "Category D"],
+    range: colors,
+  })
 
   // Animation
   const pieProps = useSpring({
     from: { scale: 0 },
     to: { scale: pieScale === 0 ? 1 : 0 },
   })
+
+  useEffect(() => {
+    const timeData: TimeData = {
+      0: generateData(pieCategories),
+      25: generateData(pieCategories),
+      50: generateData(pieCategories),
+      75: generateData(pieCategories),
+      100: generateData(pieCategories),
+    }
+    setChartData(timeData)
+  }, [])
 
   return (
     <div className="flex flex-col items-center space-y-8">
@@ -107,13 +90,13 @@ export function PieChart() {
               >
                 {(pie) => (
                     <>
-                      {pie.arcs.map((arc) => {
-                        const key = arc.data.id || arc.index;
+                      {pie.arcs.map((arc, i) => {
+                        const key = arc.data.id ?? i;
                         const [centroidX, centroidY] = pie.path.centroid(arc) ?? [0, 0];
                         const percentage = ((arc.data.value / total) * 100).toFixed(1);
                         return (
                           <g key={key}>
-                            <path d={pie.path(arc) || ""} fill={getColor(arc.data.label)} />
+                            <path d={pie.path(arc) ?? ""} fill={getColor(arc.data.label)} />
                             <Text x={centroidX} y={centroidY} textAnchor="middle" fill="white" fontSize={14} dy=".33em">
                               {/* Type bug requires it like this */}
                               {`${percentage}%`}
@@ -140,14 +123,16 @@ export function PieChart() {
       {/* Data Displayers */}
 
       <div className="flex flex-wrap justify-center gap-4">
-        {currentData.map((item) => (
+        {currentData ? currentData?.map((item) => (
           <div key={item.label} className="flex items-center space-x-2">
             <div className="w-3 h-3 rounded-full bg-foreground" style={{ backgroundColor: getColor(item.label) }} />
             <span className="text-sm">
               {item.label}: {item.value}%
             </span>
           </div>
-        ))}
+        )) : (
+          <p> No Data to be Rendered. </p>
+        )}
       </div>
     </div>
   )
