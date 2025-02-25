@@ -2,6 +2,7 @@
 
 import { Pie } from "@visx/shape"
 import { Group } from "@visx/group"
+import { scaleOrdinal } from "@visx/scale"
 import { Text } from "@visx/text"
 import type { TimeData } from "./interfaces"
 
@@ -39,6 +40,18 @@ const timeData: TimeData = {
   ],
 }
 
+// Color scale domain range
+const colors = [
+  "#FF6F61", // Coral 
+  "#6B5B95", // Lavender
+  "#88B04B", // Olive Green
+  "#F1C40F", // Golden Yellow 
+];
+const getColor = scaleOrdinal({ 
+  domain: ["Category A", "Category B", "Category C", "Category D"],
+  range: colors,
+})
+
 export function PieChart() {
   const width = 400
   const height = 400
@@ -72,7 +85,7 @@ export function PieChart() {
                       const percentage = ((arc.data.value / total) * 100).toFixed(1)
                       return (
                         <g key={`arc-${i}`}>
-                          <path d={pie.path(arc) || ""} fill={"hsl(var(--foreground))"} />
+                          <path d={pie.path(arc) || ""} fill={getColor(arc.data.label)} />
                           <Text x={centroidX} y={centroidY} textAnchor="middle" fill="white" fontSize={14} dy=".33em">
                             {/* Type bug requires it like this */}
                             {`${percentage}%`}
@@ -92,7 +105,7 @@ export function PieChart() {
       <div className="flex flex-wrap justify-center gap-4">
         {data.map((item) => (
           <div key={item.label} className="flex items-center space-x-2">
-            <div className="w-3 h-3 rounded-full bg-foreground" />
+            <div className="w-3 h-3 rounded-full bg-foreground" style={{ backgroundColor: getColor(item.label) }} />
             <span className="text-sm">
               {item.label}: {item.value}%
             </span>
